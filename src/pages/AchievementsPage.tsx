@@ -83,7 +83,7 @@ export function AchievementsPage() {
                   : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               )}
             >
-              {r !== 'all' && <RARITY_ICONS[r as keyof typeof RARITY_ICONS] className="h-3 w-3" />}
+              {r !== 'all' && (() => { const Icon = RARITY_ICONS[r as keyof typeof RARITY_ICONS]; return <Icon className="h-3 w-3" />; })()}
               {r.charAt(0).toUpperCase() + r.slice(1)}
             </button>
           ))}
@@ -97,7 +97,7 @@ export function AchievementsPage() {
           const unlocked = achievements?.filter(a => a.rarity === rarity && a.unlocked).length || 0;
           return (
             <Card key={rarity} variant="glass" className={cn('p-4 text-center', RARITY_COLORS[rarity as keyof typeof RARITY_COLORS])}>
-              <RARITY_ICONS[rarity as keyof typeof RARITY_ICONS] className="h-6 w-6 mx-auto mb-2" />
+              {(() => { const Icon = RARITY_ICONS[rarity as keyof typeof RARITY_ICONS]; return <Icon className="h-6 w-6 mx-auto mb-2" />; })()}
               <div className="text-title2 font-bold font-rounded">{unlocked}/{total}</div>
               <div className="text-caption">{rarity}</div>
             </Card>

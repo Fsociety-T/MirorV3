@@ -1,9 +1,11 @@
 // Auth Hook
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../lib/supabase';
 import { useUIStore } from '../store/useStore';
+
+const AuthContext = createContext<AuthState | null>(null);
 
 interface AuthState {
   user: User | null;
@@ -95,10 +97,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-// Context for easy access
-import { createContext, useContext } from 'react';
-const AuthContext = createContext<AuthState | null>(null);
 
 export function useAuth() {
   const context = useContext(AuthContext);

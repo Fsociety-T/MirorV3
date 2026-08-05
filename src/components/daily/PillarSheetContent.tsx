@@ -312,8 +312,10 @@ export function PillarSheetContent({ pillar }: { pillar: string }) {
       return (
         <div className="space-y-4" style={style}>
           <div className="text-center py-8">
-            <PILLAR_ICONS[pillar] className="h-12 w-12 mx-auto text-[var(--color-pillar)]" />
-            <h3 className="mt-3 text-headline font-semibold">{PILLAR_LABELS[pillar as keyof typeof PILLAR_LABELS]}</h3>
+            <div className="h-12 w-12 mx-auto rounded-xl bg-[var(--color-pillar)]/20 flex items-center justify-center">
+              <PILLAR_ICONS[pillar]?.({ className: "h-6 w-6 text-[var(--color-pillar)]" }) ?? <Sparkles className="h-6 w-6 text-[var(--color-pillar)]" />}
+            </div>
+            <h3 className="mt-3 text-headline font-semibold">{PILLAR_LABELS[pillar as keyof typeof PILLAR_LABELS] || pillar}</h3>
             <p className="mt-1 text-body text-[var(--color-text-muted)]">Deep dive content coming soon</p>
           </div>
         </div>
