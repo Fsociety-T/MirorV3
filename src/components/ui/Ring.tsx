@@ -1,6 +1,7 @@
 // Ring Component - Circular progress
 import { forwardRef, HTMLAttributes } from 'react';
-import { cn, getPillarColor } from '../../lib/design';
+import { getPillarColor } from '../../lib/design';
+import { cn } from '../../lib/utils';
 import { getProgressToNextLevel } from '../../lib/utils';
 
 interface RingProps extends HTMLAttributes<HTMLDivElement> {
