@@ -43,6 +43,9 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      - name: Add Android platform
+        run: npx cap add android
+
       - name: Capacitor Sync
         run: npx cap sync android
 
