@@ -72,21 +72,24 @@ export function AchievementsPage() {
           ))}
         </div>
         <div className="flex-1 flex justify-end gap-2">
-          {['all', 'common', 'rare', 'epic', 'legendary'].map(r => (
-            <button
-              key={r}
-              onClick={() => setRarityFilter(r)}
-              className={cn(
-                'px-3 py-1.5 rounded-xl text-caption font-medium transition-all flex items-center gap-1',
-                rarityFilter === r
-                  ? 'bg-[var(--color-pillar-skills)] text-white'
-                  : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-              )}
-            >
-              {r !== 'all' && (() => { const Icon = RARITY_ICONS[r as keyof typeof RARITY_ICONS]; return <Icon className="h-3 w-3" />; })()}
-              {r.charAt(0).toUpperCase() + r.slice(1)}
-            </button>
-          ))}
+          {['all', 'common', 'rare', 'epic', 'legendary'].map(r => {
+            const Icon = RARITY_ICONS[r as keyof typeof RARITY_ICONS];
+            return (
+              <button
+                key={r}
+                onClick={() => setRarityFilter(r)}
+                className={cn(
+                  'px-3 py-1.5 rounded-xl text-caption font-medium transition-all flex items-center gap-1',
+                  rarityFilter === r
+                    ? 'bg-[var(--color-pillar-skills)] text-white'
+                    : 'bg-[var(--color-bg-tertiary)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                )}
+              >
+                {r !== 'all' && <Icon className="h-3 w-3" />}
+                {r.charAt(0).toUpperCase() + r.slice(1)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -95,9 +98,10 @@ export function AchievementsPage() {
         {['common', 'rare', 'epic', 'legendary'].map(rarity => {
           const total = achievements?.filter(a => a.rarity === rarity).length || 0;
           const unlocked = achievements?.filter(a => a.rarity === rarity && a.unlocked).length || 0;
+          const Icon = RARITY_ICONS[rarity as keyof typeof RARITY_ICONS];
           return (
             <Card key={rarity} variant="glass" className={cn('p-4 text-center', RARITY_COLORS[rarity as keyof typeof RARITY_COLORS])}>
-              {(() => { const Icon = RARITY_ICONS[rarity as keyof typeof RARITY_ICONS]; return <Icon className="h-6 w-6 mx-auto mb-2" />; })()}
+              <Icon className="h-6 w-6 mx-auto mb-2" />
               <div className="text-title2 font-bold font-rounded">{unlocked}/{total}</div>
               <div className="text-caption">{rarity}</div>
             </Card>
