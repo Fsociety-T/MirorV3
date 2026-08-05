@@ -128,12 +128,15 @@ export function AchievementsPage() {
         <div className="p-5">
           <h3 className="text-headline font-semibold mb-4 text-[var(--color-text-primary)]">Rarity Guide</h3>
           <div className="flex flex-wrap gap-4">
-            {['common', 'rare', 'epic', 'legendary'].map(rarity => (
-              <div key={rarity} className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-caption" style={{ background: `var(--color-${rarity})/10`, border: `1px solid var(--color-${rarity})/30`, color: `var(--color-${rarity})` }}>
-                <RARITY_ICONS[rarity as keyof typeof RARITY_ICONS] className="h-4 w-4" />
-                <span className="capitalize">{rarity}</span>
-              </div>
-            ))}
+            {['common', 'rare', 'epic', 'legendary'].map(rarity => {
+              const Icon = RARITY_ICONS[rarity as keyof typeof RARITY_ICONS];
+              return (
+                <div key={rarity} className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-caption" style={{ background: `var(--color-${rarity})/10`, border: `1px solid var(--color-${rarity})/30`, color: `var(--color-${rarity})` }}>
+                  <Icon className="h-4 w-4" />
+                  <span className="capitalize">{rarity}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </Card>
