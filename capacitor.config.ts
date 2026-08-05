@@ -1,4 +1,6 @@
-{
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
   "appId": "com.miror.v3",
   "appName": "Miror",
   "webDir": "dist",
@@ -18,4 +20,6 @@
       }
     }
   }
-}
+};
+
+export default config;
