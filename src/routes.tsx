@@ -12,6 +12,7 @@ const VisionPage = lazy(() => import('./pages/VisionPage').then(m => ({ default:
 const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
 const AchievementsPage = lazy(() => import('./pages/AchievementsPage').then(m => ({ default: m.AchievementsPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const authRequired = import.meta.env.VITE_REQUIRE_AUTH === 'true';
 
 // Loading fallback
 function PageLoader() {
@@ -25,7 +26,8 @@ function PageLoader() {
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
+  if (!authRequired) return <>{children}</>;
   if (loading) return <PageLoader />;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
@@ -34,7 +36,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 // Public route (redirect if authenticated)
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
+  if (!authRequired) return <Navigate to="/daily" replace />;
   if (loading) return <PageLoader />;
   if (user) return <Navigate to="/daily" replace />;
   return <>{children}</>;
