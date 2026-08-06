@@ -1,0 +1,8 @@
+{
+  "appId": "com.miror.simulator",
+  "appName": "Miror Simulator",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
