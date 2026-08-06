@@ -7,7 +7,7 @@ import { useStreaks, useCheckins, useCheckinMutations } from '../hooks/useSupaba
 import { usePillarCarousel, usePullDown } from '../hooks/useGestures';
 import { PILLAR_ORDER, PILLAR_LABELS, PILLAR_ITEMS } from '../lib/supabase';
 import { getPillarColor } from '../lib/design';
-import { formatDate, getTodayString } from '../lib/utils';
+import { cn, formatDate, getTodayString } from '../lib/utils';
 import { Card, Pill, Ring, StreakRing } from '../components/ui';
 import { hapticCheckin, hapticSwipe, hapticSwipeEnd } from '../lib/haptics';
 import { Flame, ChevronLeft, ChevronRight, Target, Dumbbell, Shield, Sparkles, MoreHorizontal } from 'lucide-react';

@@ -71,6 +71,7 @@ export function TreePage() {
         {/* Tree Visualization */}
         <TreeVisualization
           streaks={streaks}
+          overallStreak={overallStreak}
           daysClean={daysClean}
           skills={skills || []}
           projects={projects || []}
@@ -118,8 +119,9 @@ export function TreePage() {
   );
 }
 
-function TreeVisualization({ streaks, daysClean, skills, projects, newAchievements }: {
+function TreeVisualization({ streaks, overallStreak, daysClean, skills, projects, newAchievements }: {
   streaks: Record<string, number>;
+  overallStreak: number;
   daysClean: number;
   skills: any[];
   projects: any[];

@@ -22,6 +22,7 @@ export function ProjectsPage() {
   const [editingProject, setEditingProject] = useState<string | null>(null);
   const [newProject, setNewProject] = useState({ title: '', goal: '', deadline: '', color: '#8b5cf6' });
   const [newTask, setNewTask] = useState({ projectId: '', title: '' });
+  const projectList = projects || [];
 
   const handleCreateProject = async () => {
     if (!newProject.title.trim()) return;
@@ -73,7 +74,7 @@ export function ProjectsPage() {
       </div>
 
       {/* Projects List */}
-      {projects?.length === 0 ? (
+      {projectList.length === 0 ? (
         <Card variant="elevated" className="text-center py-12">
           <Target className="h-16 w-16 mx-auto text-[var(--color-text-muted)]" />
           <h2 className="mt-4 text-title2 font-semibold text-[var(--color-text-primary)]">No projects yet</h2>
@@ -84,7 +85,7 @@ export function ProjectsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {projects.map(project => {
+          {projectList.map(project => {
             const projectTasks = tasks?.filter(t => t.project_id === project.id) || [];
             const progress = calculateProgress(project.id);
             const style = { '--color-pillar': project.color } as React.CSSProperties;
