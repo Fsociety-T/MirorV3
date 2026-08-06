@@ -54,18 +54,53 @@ jobs:
           cd android
           ./gradlew assembleRelease
 
+      - name: Sign and verify APK
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          APK_DIR=android/app/build/outputs/apk/release
+          UNSIGNED_APK="$APK_DIR/app-release-unsigned.apk"
+          ALIGNED_APK="$APK_DIR/app-release-aligned.apk"
+          SIGNED_APK="$APK_DIR/app-release.apk"
+          KEYSTORE="$RUNNER_TEMP/miror-release.keystore"
+          BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
+          else
+            ANDROID_KEYSTORE_PASSWORD=miror-release-password
+            ANDROID_KEY_ALIAS=miror
+            ANDROID_KEY_PASSWORD=miror-release-password
+            keytool -genkeypair -v -keystore "$KEYSTORE" -storetype PKCS12 \
+              -storepass "$ANDROID_KEYSTORE_PASSWORD" -keypass "$ANDROID_KEY_PASSWORD" \
+              -alias "$ANDROID_KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+              -dname "CN=Miror, OU=Mobile, O=Miror, L=Paris, ST=Ile-de-France, C=FR"
+          fi
+
+          "$BUILD_TOOLS/zipalign" -f -p 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" \
+            --ks-pass "pass:$ANDROID_KEYSTORE_PASSWORD" \
+            --key-pass "pass:$ANDROID_KEY_PASSWORD" \
+            --out "$SIGNED_APK" "$ALIGNED_APK"
+          "$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$SIGNED_APK"
+          rm "$UNSIGNED_APK" "$ALIGNED_APK"
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: miror-apk
-          path: android/app/build/outputs/apk/release/*.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/v')
         with:
-          files: android/app/build/outputs/apk/release/*.apk
+          files: android/app/build/outputs/apk/release/app-release.apk
           generate_release_notes: true
           draft: false
           prerelease: false
