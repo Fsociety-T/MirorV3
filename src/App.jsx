@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Activity,
   ArrowUpRight,
@@ -65,8 +65,11 @@ function formatShortDate(value) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(`${value}T00:00:00`));
 }
 
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
+function greetingForNow() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export default function App() {
@@ -108,19 +111,19 @@ export default function App() {
       </aside>
 
       <main className="app-main">
-        <header className="app-header">
+        <header className={activeView === 'home' ? 'app-header home-header' : 'app-header'}>
           <div>
             <p className="overline">{formatLongDate()}</p>
-            <h1>{pageCopy[activeView][0]}</h1>
-            <p className="header-subtitle">{pageCopy[activeView][1]}</p>
+            <h1>{activeView === 'home' ? greetingForNow() : pageCopy[activeView][0]}</h1>
+            <p className="header-subtitle">{activeView === 'home' ? 'Keep the day intentional.' : pageCopy[activeView][1]}</p>
           </div>
           <div className="header-actions">
-            <div className="performance-chip"><span>Performance</span><strong>{metrics.performance}</strong></div>
+            {activeView !== 'home' && <div className="performance-chip"><span>Performance</span><strong>{metrics.performance}</strong></div>}
             <button type="button" className="primary-button" onClick={() => setModal('task')}><Plus size={18} />Add task</button>
           </div>
         </header>
 
-        <div className="system-notice"><Zap size={14} />{notice}</div>
+        {activeView !== 'home' && <div className="system-notice"><Zap size={14} />{notice}</div>}
         <div className="view-enter" key={activeView}>{renderView()}</div>
       </main>
 
@@ -156,100 +159,105 @@ function MobileNavButton({ item, active, onClick }) {
   return <button type="button" className={active ? 'mobile-tab active' : 'mobile-tab'} onClick={onClick}><Icon size={20} /><span>{item.label}</span></button>;
 }
 
-function HomeView({ state, metrics, achievements, actions, navigate, setModal }) {
+function HomeView({ state, metrics, actions, navigate, setModal }) {
   const completedPrayers = prayers.filter((item) => state.prayerChecks[item.id]).length;
   const completedSports = state.sportSessions.filter((item) => item.done).length;
-  const unlocked = achievements.filter((item) => item.unlocked).length;
-  const activeTasks = state.tasks.filter((item) => !item.done).slice(0, 4);
+  const completedTasks = state.tasks.filter((item) => item.done).length;
+  const activeTasks = state.tasks.filter((item) => !item.done).slice(0, 3);
   const cleanDays = state.addictions.length ? Math.min(...state.addictions.map((item) => daysSince(item.startDate))) : 0;
 
   return (
     <div className="home-layout">
-      <FutureCard state={state} metrics={metrics} navigate={navigate} />
-
-      <section className="surface today-surface">
-        <SectionHeader eyebrow="TODAY" title="Next actions" action={<button type="button" className="icon-button" onClick={() => setModal('task')} title="Add a task"><Plus size={18} /></button>} />
-        <div className="compact-task-list">
-          {activeTasks.length ? activeTasks.map((task) => <TaskRow key={task.id} task={task} state={state} onToggle={() => actions.toggleTask(task.id)} compact />) : <EmptyState icon={Check} title="Today is clear" copy="Add the next action when you are ready." />}
+      <section className="surface direction-card">
+        <div className="direction-copy">
+          <p className="direction-label"><Sparkles size={14} />Current direction</p>
+          <h2>{state.vision.mission}</h2>
+          <p>{state.vision.identity}</p>
+          <button type="button" className="quiet-link" onClick={() => navigate('vision')}>Open vision <ArrowUpRight size={15} /></button>
         </div>
-        <button type="button" className="surface-link" onClick={() => navigate('today')}>Open full day <ChevronRight size={16} /></button>
+        <FutureSummary metrics={metrics} />
       </section>
 
-      <section className="surface systems-surface">
-        <SectionHeader eyebrow="DAILY SYSTEMS" title="Signals that shape performance" />
-        <div className="signal-list">
-          <Signal icon={Landmark} label="Prayer" value={`${completedPrayers}/5`} progress={metrics.prayerRate * 100} color={domains.prayer.color} onClick={() => navigate('trackers')} />
-          <Signal icon={Dumbbell} label="Sport" value={`${completedSports}/3`} progress={metrics.sportRate * 100} color={domains.health.color} onClick={() => navigate('trackers')} />
-          <Signal icon={ShieldCheck} label="No addiction" value={`${cleanDays}d`} progress={metrics.disciplineRate * 100} color={domains.discipline.color} onClick={() => navigate('trackers')} />
-          <Signal icon={Brain} label="Skills" value={`${state.skills.length}`} progress={metrics.skillRate * 100} color={domains.growth.color} onClick={() => navigate('skills')} />
+      <section className="surface home-focus">
+        <div className="home-section-heading">
+          <div><p className="overline">TODAY</p><h2>Focus</h2></div>
+          <span>{completedTasks}/{state.tasks.length}</span>
+        </div>
+        <div className="home-task-list">
+          {activeTasks.length ? activeTasks.map((task) => <HomeTask key={task.id} task={task} state={state} onToggle={() => actions.toggleTask(task.id)} />) : <EmptyState icon={Check} title="Today is clear" copy="Everything planned is complete." />}
+        </div>
+        <div className="home-section-actions">
+          <button type="button" className="quiet-link" onClick={() => navigate('today')}>View day <ChevronRight size={15} /></button>
+          <button type="button" className="icon-button" onClick={() => setModal('task')} title="Add a task"><Plus size={17} /></button>
         </div>
       </section>
 
-      <section className="surface momentum-surface">
-        <SectionHeader eyebrow="PROJECT MOMENTUM" title="Work tied to the vision" action={<button type="button" className="text-button" onClick={() => navigate('projects')}>View all</button>} />
+      <section className="surface home-balance">
+        <div className="home-section-heading">
+          <div><p className="overline">TODAY</p><h2>Balance</h2></div>
+          <strong>{metrics.performance}</strong>
+        </div>
+        <div className="balance-grid">
+          <BalanceItem icon={Landmark} label="Prayer" value={`${completedPrayers}/5`} progress={metrics.prayerRate} color={domains.prayer.color} onClick={() => navigate('trackers')} />
+          <BalanceItem icon={Dumbbell} label="Movement" value={`${completedSports}/3`} progress={metrics.sportRate} color={domains.health.color} onClick={() => navigate('trackers')} />
+          <BalanceItem icon={ShieldCheck} label="Freedom" value={`${cleanDays} days`} progress={metrics.disciplineRate} color={domains.discipline.color} onClick={() => navigate('trackers')} />
+          <BalanceItem icon={Brain} label="Growth" value={`${Math.round(metrics.skillRate * 100)}%`} progress={metrics.skillRate} color={domains.growth.color} onClick={() => navigate('skills')} />
+        </div>
+      </section>
+
+      <section className="surface home-projects">
+        <div className="home-section-heading">
+          <div><p className="overline">IN MOTION</p><h2>Projects</h2></div>
+          <button type="button" className="quiet-link" onClick={() => navigate('projects')}>View all <ChevronRight size={15} /></button>
+        </div>
         <div className="project-strip">
-          {state.projects.slice(0, 3).map((project) => <ProjectLine key={project.id} project={project} tasks={state.tasks} />)}
+          {state.projects.slice(0, 2).map((project) => <ProjectLine key={project.id} project={project} tasks={state.tasks} />)}
         </div>
-      </section>
-
-      <section className="surface proof-surface">
-        <SectionHeader eyebrow="PROOF" title="Achievements unlocked" action={<span className="section-count">{unlocked}/{achievements.length}</span>} />
-        <div className="achievement-preview">
-          {achievements.filter((item) => item.unlocked).slice(0, 3).map((item) => {
-            const Icon = item.icon;
-            return <div key={item.id} className={`mini-achievement ${item.tone}`}><Icon size={18} /><span>{item.title}</span></div>;
-          })}
-          {!unlocked && <p className="muted-copy">Your first completed action unlocks the first proof.</p>}
-        </div>
-        <button type="button" className="surface-link" onClick={() => navigate('achievements')}>See all achievements <ChevronRight size={16} /></button>
       </section>
     </div>
   );
 }
 
-function FutureCard({ state, metrics, navigate }) {
+function FutureSummary({ metrics }) {
   const circumference = 2 * Math.PI * 42;
   const offset = circumference * (1 - metrics.futureScore / 100);
-  const points = useMemo(() => {
-    const base = metrics.performance;
-    return [base - 8, base - 2, base + 5, base + 2, base + 11, metrics.futureScore].map((value, index) => `${index * 44 + 4},${76 - clamp(value, 5, 95) * 0.64}`).join(' ');
-  }, [metrics.futureScore, metrics.performance]);
-
   return (
-    <section className="future-card">
-      <div className="future-copy">
-        <div className="future-topline"><span><Sparkles size={15} />FUTURE CARD</span><em>90 DAY OUTLOOK</em></div>
-        <h2>{state.vision.identity}</h2>
-        <p>{state.vision.statement}</p>
-        <div className="future-trajectory" aria-label="Future performance trajectory">
-          <svg viewBox="0 0 230 84" role="img">
-            <line x1="4" y1="75" x2="226" y2="75" />
-            <polyline points={points} />
-            <circle cx="224" cy={76 - clamp(metrics.futureScore, 5, 95) * 0.64} r="4" />
-          </svg>
-          <div><span>Now</span><span>30 days</span><span>90 days</span></div>
-        </div>
-        <button type="button" className="future-command" onClick={() => navigate('vision')}>Shape this future <ArrowUpRight size={16} /></button>
-      </div>
-      <div className="future-score">
+    <div className="future-summary">
+      <div className="future-ring">
         <svg viewBox="0 0 100 100" aria-label={`Future score ${metrics.futureScore}`}>
           <circle className="score-track" cx="50" cy="50" r="42" />
           <circle className="score-value" cx="50" cy="50" r="42" strokeDasharray={circumference} strokeDashoffset={offset} />
         </svg>
-        <div><strong>{metrics.futureScore}</strong><span>future score</span></div>
+        <strong>{metrics.futureScore}</strong>
       </div>
-      <div className="future-drivers">
-        <Driver label="Execution" value={metrics.taskRate} />
-        <Driver label="Faith" value={metrics.prayerRate} />
-        <Driver label="Health" value={metrics.sportRate} />
-        <Driver label="Growth" value={metrics.skillRate} />
+      <div className="future-summary-copy">
+        <span>90-day future</span>
+        <strong>{metrics.futureScore >= 70 ? 'Building momentum' : 'Taking shape'}</strong>
+        <p><span>Today {metrics.performance}</span><ArrowUpRight size={14} /><span>Future {metrics.futureScore}</span></p>
       </div>
-    </section>
+    </div>
   );
 }
 
-function Driver({ label, value }) {
-  return <div className="future-driver"><span>{label}</span><strong>{Math.round(value * 100)}%</strong><div><i style={{ width: `${value * 100}%` }} /></div></div>;
+function HomeTask({ task, state, onToggle }) {
+  const domain = domains[task.domain] || domains.purpose;
+  const project = state.projects.find((item) => item.id === task.projectId);
+  return (
+    <div className="home-task">
+      <button type="button" className="task-toggle" onClick={onToggle} style={{ '--task-color': domain.color }} aria-label="Complete task"><Circle size={17} /></button>
+      <div><strong>{task.title}</strong><span>{project?.title || 'Personal'} / {task.estimate} min</span></div>
+    </div>
+  );
+}
+
+function BalanceItem({ icon: Icon, label, value, progress, color, onClick }) {
+  return (
+    <button type="button" className="balance-item" onClick={onClick} style={{ '--balance-color': color }}>
+      <span className="balance-icon"><Icon size={17} /></span>
+      <span className="balance-copy"><small>{label}</small><strong>{value}</strong></span>
+      <span className="balance-progress"><i style={{ width: `${progress * 100}%` }} /></span>
+    </button>
+  );
 }
 
 function TodayView({ state, metrics, actions, setModal }) {
@@ -430,10 +438,6 @@ function SectionHeader({ eyebrow, title, action }) {
 
 function Stat({ label, value, detail, icon: Icon, color }) {
   return <section className={`stat-block ${color}`}><Icon size={19} /><div><span>{label}</span><strong>{value}</strong><small>{detail}</small></div></section>;
-}
-
-function Signal({ icon: Icon, label, value, progress, color, onClick }) {
-  return <button type="button" className="signal-row" onClick={onClick}><span className="signal-icon" style={{ color }}><Icon size={18} /></span><strong>{label}</strong><div className="signal-track"><i style={{ width: `${progress}%`, background: color }} /></div><span>{value}</span><ChevronRight size={15} /></button>;
 }
 
 function EmptyState({ icon: Icon, title, copy }) {
