@@ -1,4 +1,4 @@
-name: Build Miror Simulator APK
+name: Build Mirror APK
 
 on:
   push:
@@ -47,35 +47,35 @@ jobs:
         run: cd android && ./gradlew assembleRelease
 
       - name: Sign and verify APK
+        env:
+          MIRROR_KEYSTORE_BASE64: ${{ secrets.MIRROR_KEYSTORE_BASE64 }}
+          MIRROR_KEYSTORE_PASSWORD: ${{ secrets.MIRROR_KEYSTORE_PASSWORD }}
+          MIRROR_KEY_ALIAS: ${{ secrets.MIRROR_KEY_ALIAS }}
         run: |
           APK_DIR=android/app/build/outputs/apk/release
           UNSIGNED_APK="$APK_DIR/app-release-unsigned.apk"
           ALIGNED_APK="$APK_DIR/app-release-aligned.apk"
-          SIGNED_APK="$APK_DIR/miror-simulator.apk"
-          KEYSTORE="$RUNNER_TEMP/miror-simulator.keystore"
+          SIGNED_APK="$APK_DIR/mirror-life-os.apk"
+          KEYSTORE="$RUNNER_TEMP/mirror-life-os.keystore"
           BUILD_TOOLS=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
-          keytool -genkeypair -v -keystore "$KEYSTORE" -storetype PKCS12 \
-            -storepass miror-simulator-password -keypass miror-simulator-password \
-            -alias miror-simulator -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Miror Simulator, OU=Mobile, O=Miror, L=Paris, ST=Ile-de-France, C=FR"
+          printf '%s' "$MIRROR_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE"
           "$BUILD_TOOLS/zipalign" -f -p 4 "$UNSIGNED_APK" "$ALIGNED_APK"
-          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-key-alias miror-simulator \
-            --ks-pass pass:miror-simulator-password --key-pass pass:miror-simulator-password \
+          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-key-alias "$MIRROR_KEY_ALIAS" \
+            --ks-pass pass:"$MIRROR_KEYSTORE_PASSWORD" --key-pass pass:"$MIRROR_KEYSTORE_PASSWORD" \
             --out "$SIGNED_APK" "$ALIGNED_APK"
           "$BUILD_TOOLS/apksigner" verify --verbose "$SIGNED_APK"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: miror-simulator-apk
-          path: android/app/build/outputs/apk/release/miror-simulator.apk
+          name: mirror-life-os-apk
+          path: android/app/build/outputs/apk/release/mirror-life-os.apk
           retention-days: 30
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/release/miror-simulator.apk
+          files: android/app/build/outputs/apk/release/mirror-life-os.apk
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

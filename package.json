@@ -1,7 +1,7 @@
 {
-  "name": "miror-execution-simulator",
+  "name": "mirror-life-os",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,4 +19,3 @@
     "vite": "5.4.10"
   }
 }
-

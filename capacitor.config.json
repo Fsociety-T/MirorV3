@@ -1,6 +1,6 @@
 {
-  "appId": "com.miror.simulator",
-  "appName": "Miror Simulator",
+  "appId": "com.mirror.lifeos",
+  "appName": "Mirror",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
