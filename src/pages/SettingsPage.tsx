@@ -8,7 +8,7 @@ import { useUIStore } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 
 export function SettingsPage() {
-  const { user, profile, signOut, updateProfile } = useAuth();
+  const { user, profile, isGhost, signOut, updateProfile } = useAuth();
   const { theme, toggleTheme, setTheme } = useUIStore();
   const [notifications, setNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ export function SettingsPage() {
                 <img src={profile.avatar_url} alt="" className="h-16 w-16 rounded-xl object-cover" />
               ) : (
                 <span className="text-2xl font-bold text-[var(--color-pillar-vision)]">
-                  {profile?.display_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
+                  {profile?.display_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || (isGhost ? 'G' : 'U')}
                 </span>
               )}
             </div>
@@ -62,7 +62,7 @@ export function SettingsPage() {
                 placeholder="Your name"
               />
               <p className="mt-1 text-caption text-[var(--color-text-muted)]">
-                {user?.email}
+                {isGhost ? 'Ghost Mode' : user?.email}
               </p>
             </div>
           </div>
@@ -138,9 +138,15 @@ export function SettingsPage() {
           </div>
           
           <div className="space-y-3">
+            {isGhost ? (
+              <SettingsRow icon={Shield} label="Account" value="Ghost Mode" />
+            ) : (
+              <>
             <SettingsRow icon={Mail} label="Email" value={user?.email || 'Not set'} />
             <SettingsRow icon={Key} label="Password" value="••••••••" action={<Button variant="ghost" size="sm">Change</Button>} />
             <SettingsRow icon={Trash} label="Delete Account" value="Permanently remove all data" action={<Button variant="destructive" size="sm" onClick={handleDeleteAccount}>Delete</Button>} />
+              </>
+            )}
           </div>
         </div>
       </Card>

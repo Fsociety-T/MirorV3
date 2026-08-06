@@ -11,10 +11,12 @@ interface AuthState {
   user: User | null;
   profile: Profile | null;
   session: Session | null;
+  isGhost: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInAnonymously: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
 }
@@ -24,43 +26,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user: null,
     profile: null,
     session: null,
+    isGhost: false,
     loading: true,
     signIn: async () => ({ error: new Error('Not initialized') }),
     signUp: async () => ({ error: new Error('Not initialized') }),
     signInWithGoogle: async () => ({ error: new Error('Not initialized') }),
+    signInAnonymously: async () => ({ error: new Error('Not initialized') }),
     signOut: async () => {},
     updateProfile: async () => ({ error: new Error('Not initialized') }),
   });
 
   const setTheme = useUIStore((s) => s.setTheme);
 
+  const fetchProfile = useCallback(async (user: User) => {
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+    if (data) {
+      setState((prev) => prev.user?.id === user.id ? { ...prev, profile: data } : prev);
+      return;
+    }
+
+    if (error?.code !== 'PGRST116') return;
+
+    const displayName = typeof user.user_metadata.display_name === 'string'
+      ? user.user_metadata.display_name
+      : null;
+    const { data: createdProfile, error: createError } = await supabase
+      .from('profiles')
+      .insert({ id: user.id, display_name: displayName })
+      .select()
+      .single();
+
+    if (!createError && createdProfile) {
+      setState((prev) => prev.user?.id === user.id ? { ...prev, profile: createdProfile } : prev);
+    }
+  }, []);
+
+  const setSessionState = useCallback((session: Session | null) => {
+    const user = session?.user ?? null;
+    setState((prev) => ({
+      ...prev,
+      user,
+      profile: user?.id === prev.user?.id ? prev.profile : null,
+      session,
+      isGhost: Boolean(user?.is_anonymous),
+      loading: false,
+    }));
+
+    if (user) void fetchProfile(user);
+  }, [fetchProfile]);
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setState((prev) => ({ ...prev, session, loading: false }));
-      if (session?.user) fetchProfile(session.user.id);
+      setSessionState(session);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setState((prev) => ({ ...prev, session, loading: false }));
-      if (session?.user) {
-        fetchProfile(session.user.id);
-        if (event === 'SIGNED_IN') setTheme(session.user.user_metadata.theme as 'light' | 'dark' || 'dark');
-      } else {
-        setState((prev) => ({ ...prev, user: null, profile: null }));
+      setSessionState(session);
+      if (event === 'SIGNED_IN' && session?.user) {
+        setTheme(session.user.user_metadata.theme as 'light' | 'dark' || 'dark');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [setTheme]);
-
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (!error && data) {
-      setState((prev) => ({ ...prev, user: { ...prev.user!, id: userId } as User, profile: data }));
-    }
-  };
+  }, [setSessionState, setTheme]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -81,6 +112,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   }, []);
 
+  const signInAnonymously = useCallback(async () => {
+    const { error } = await supabase.auth.signInAnonymously();
+    return { error };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
   }, []);
@@ -93,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   }, [state.user?.id]);
 
-  const value = { ...state, signIn, signUp, signInWithGoogle, signOut, updateProfile };
+  const value = { ...state, signIn, signUp, signInWithGoogle, signInAnonymously, signOut, updateProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
